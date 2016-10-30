@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test Ground</title>
+<style>* {padding: 0; margin: 0;}</style>
+<body>
+<script src="pixi.min.js"></script>
+<script>
+var autoDetectRenderer = PIXI.autoDetectRenderer,
+    Container = PIXI.Container,
+    loader = PIXI.loader,
+    Text = PIXI.Text,
+    Sprite = PIXI.Sprite,
+    Graphics = PIXI.Graphics;
+
+//Create the renderer
+var renderer = autoDetectRenderer(256, 256, { antialias : true });
+renderer.backgroundColor = 0x061639;
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+renderer.resize(window.innerWidth, window.innerHeight);
+
+//Add the canvas to the HTML document
+document.body.appendChild(renderer.view);
+
+//Create a container object called the `stage`
+var stage = new Container();
+var line = new Graphics().lineStyle(3, 0xffffff);
+line.moveTo(100,100);
+line.bezierCurveTo(120,100,200,100,200,200);
+line.bezierCurveTo(200,300,280,300,300,300);
+stage.addChild(line);
+
+var text = new Text('This is a pixi test',{fontFamily : 'Arial', fontsize: 24, fill : 0xff1010, align: 'center'});
+
+stage.addChild(text);
+
+renderer.render(stage);
+</script>
+</body>

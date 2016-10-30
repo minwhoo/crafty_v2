@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Hello World</title>
+<style>* {padding: 0; margin: 0;}</style>
+<body>
+<script src="pixi.min.js"></script>
+<script src="block.js"></script>
+<script>
+var renderer = PIXI.autoDetectRenderer(800, 600, { antialias: true });
+document.body.appendChild(renderer.view);
+
+var stage = new PIXI.Container();    
+
+var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
+
+//var blockTwo = new Block("true-body",['test','test2']);
+//ar blockCondition = new Block("condition");
+
+//ar blockOne = new Block("if",[blockCondition,blockTwo,'false-body']);
+var blockOne = new Block(ifBlockInfo);
+blockOne.container.position.set(0,0);
+stage.addChild(blockOne.container);
+
+// run the render loop
+animate();
+
+function animate() {
+    renderer.render(stage);
+    requestAnimationFrame( animate );
+}
+</script>
+<p>
+</p>
+</body>
