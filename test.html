@@ -19,10 +19,11 @@ var sidebar = new PIXI.Container();
 renderer.render(stage); // remove black flash
 stage.interactive = false;
 
+let SIDEBAR_STYLE = {width:200, backgroundColor:0xEEEEEE, };
+
 PIXI.loader
 .add("images/background-tile.png")
 .load(setup);
-
 
 function setup() {
     //  create and add background tile pattern
@@ -35,13 +36,13 @@ function setup() {
     backgroundTile.height = window.innerHeight;
     stage.addChild(backgroundTile);
 
-    //  resize renderer and backgroundTile when window is resized
-    window.addEventListener('resize', function(event){
-        backgroundTile.width = window.innerWidth;
-        backgroundTile.height = window.innerHeight;
-        renderer.resize(window.innerWidth, window.innerHeight);
-    });
 
+    //  create and add sidebar
+    var sidebar = new PIXI.Graphics();
+    sidebar.beginFill(SIDEBAR_STYLE.backgroundColor,1);
+    sidebar.drawRect(0,0,SIDEBAR_STYLE.width, window.innerHeight);
+    sidebar.endFill();
+    stage.addChild(sidebar);
 
     /*
     var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
@@ -57,6 +58,16 @@ function setup() {
     stage.addChild(equalsBlock);
     */
 
+
+    //  resize renderer, sidebar, backgroundTile when window is resized
+    window.addEventListener('resize', function(event){
+        backgroundTile.width = window.innerWidth;
+        backgroundTile.height = window.innerHeight;
+        sidebar.height = window.innerHeight;
+        renderer.resize(window.innerWidth, window.innerHeight);
+    });
+    
+    //  render animation
     animate();
 
     function animate() {
