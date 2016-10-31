@@ -1,32 +1,54 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>Hello World</title>
-<style>* {padding: 0; margin: 0;}</style>
+<style>* {padding: 0; margin: 0;}
+</style>
 <body>
 <script src="pixi.min.js"></script>
 <script src="block.js"></script>
 <script>
-var renderer = PIXI.autoDetectRenderer(800, 600, { antialias: true });
+var renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0xCCCCCC, antialias: true });
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+renderer.resize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.view);
 
-var stage = new PIXI.Container();    
+var stage = new PIXI.Container();
+renderer.render(stage); // remove black flash
+stage.interactive = false;
 
-var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
+PIXI.loader
+  .add("images/background-tile.png")
+  .load(setup);
 
-//var blockTwo = new Block("true-body",['test','test2']);
-//ar blockCondition = new Block("condition");
+function setup() {
+  var sprite = new PIXI.extras.TilingSprite(
+    PIXI.loader.resources["images/background-tile.png"].texture,
+    17,
+    17
+  );
+  sprite.width = 1000;
+  sprite.height = 1000;
+  stage.addChild(sprite);
 
-//ar blockOne = new Block("if",[blockCondition,blockTwo,'false-body']);
-var blockOne = new Block(ifBlockInfo);
-blockOne.container.position.set(0,0);
-stage.addChild(blockOne.container);
+  var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
+  var addBlockInfo = new BlockInfo("+", blockType.function, parameters = ["a", "b"], library = "math")
+  var equalsBlockInfo = new BlockInfo("=", blockType.function, parameters = ["a", "b"], library = "math")
 
-// run the render loop
-animate();
+  var addBlock = new Block(addBlockInfo);
+  var equalsBlock = new Block(equalsBlockInfo);
+  var ifBlock = new Block(ifBlockInfo, [null, addBlock, null]);
+  ifBlock.container.position.set(10,10);
+  stage.addChild(ifBlock.container);
+  stage.addChild(equalsBlock.container);
 
-function animate() {
-    renderer.render(stage);
-    requestAnimationFrame( animate );
+  animate();
+
+  function animate() {
+      renderer.render(stage);
+      requestAnimationFrame( animate );
+  }
 }
 </script>
 <p>
