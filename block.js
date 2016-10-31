@@ -5,6 +5,9 @@ const PARAMETER_BLOCK_STYLE = {color: 0x6691d6, opacity: 1, cornerRadius: 10};
 const LINE_STYLE = {color: 0xFFFFFF, width: 3, spacing: 2, bezierHScale: 0.1, bezierVScale: 0.5};
 const BLOCK_MARGIN = {height: 10, width: 100};
 
+let IS_DRAGGING = false;
+let MOUSEOVER_BLOCK = null;
+
 function BlockInfo(name, type, parameters = [], library = "", docstring = "") {
     this.name = name;
     this.type = type;
@@ -212,6 +215,7 @@ Block.prototype.setInteractivity = function() {
 
             this.alpha = 0.6;
             this.dragging = true;
+            IS_DRAGGING = true;
         }
     }
 
@@ -223,10 +227,9 @@ Block.prototype.setInteractivity = function() {
                 //console.log("DEBUG::: drag ended by \"" + this.blockInfo.name + "\"");
 
                 //  if there is parameter block below, attach
-                var targetBlock = this._getStage().target;
-                if (targetBlock) {
-                    this.attachTo(targetBlock);
-                    this._getStage().target = null;
+                if (MOUSEOVER_BLOCK) {
+                    this.attachTo(MOUSEOVER_BLOCK);
+                    MOUSEOVER_BLOCK = null;
                 }
             }
             // case: clicked
@@ -237,7 +240,7 @@ Block.prototype.setInteractivity = function() {
 
             this.alpha = 1;
             this.dragging = false;
-        //}
+            IS_DRAGGING = false;
         }
     }
 
@@ -274,12 +277,16 @@ Block.prototype.setInteractivity = function() {
         //console.log("DEBUG::: parameter moving by \"" + this.blockInfo.name + "\"");
 
         //  if mouse position is inside hit area, then set stage.target to this
-        var relativeMousePosition = event.data.getLocalPosition(this);
-        if (this.hitArea.contains(relativeMousePosition.x, relativeMousePosition.y)) {
-            this._getStage().target = this;
-        } else {
-            if (this == this._getStage().target) {
-                this._getStage().target = null;
+        if (IS_DRAGGING) {
+            var relativeMousePosition = event.data.getLocalPosition(this);
+            if (this.hitArea.contains(relativeMousePosition.x, relativeMousePosition.y)) {
+                this.getChildAt(0).tint = 0xDDDDDD;
+                MOUSEOVER_BLOCK = this;
+            } else {
+                if (this == MOUSEOVER_BLOCK) {
+                    MOUSEOVER_BLOCK = null;
+                    this.getChildAt(0).tint = 0xFFFFFF;
+                }
             }
         }
     }
