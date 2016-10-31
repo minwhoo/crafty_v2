@@ -51,32 +51,39 @@ Block.prototype.initialize = function() {
     this.addChild(blockGraphics);
     this.addChild(text);
 
+    //  If no children given, make children list of null blocks
+    if (this.childBlocks.length == 0) {
+        this.childBlocks = new Array(this.blockInfo.parameters.length);
+    }
+
     //  Create and store parameter blocks with parameterName
     for (var i=0;i<this.blockInfo.parameters.length;i++) {
         var parameterBlockInfo = new BlockInfo(this.blockInfo.parameters[i],blockType.parameter);
         var newBlock = new Block(parameterBlockInfo);
         this.parameterBlocks.push(newBlock);
-    }
 
-    //  Make children list of null blocks
-    if (this.childBlocks.length == 0) {
-        this.childBlocks = new Array(this.parameterBlocks.length);
+        //  Add parameter block to this(block)
+        this.addChild(this.parameterBlocks[i]);
+
+        //  Add child block to this(block) if it isn't null
+        if (this.childBlocks[i] != null) {
+            this.addChild(this.childBlocks[i]);
+        }
     }
 
     //  render self
     this.render();
 
-    //  enable drag and drop for non-parameter blocks
-    if (this.blockInfo.type != blockType.parameter) {
-        this.enableDragAndDrop();
-    }
+    //  set interactivity of blocks
+    this.setInteractivity();
 }
 
-//** render: adds child blocks and draws lines
+//** render: positions child/parameter blocks and draws lines
 Block.prototype.render = function() {
+    var blockWidth = this.getChildAt(0).width;
     var blockHeight = this.getChildAt(0).height;
-    var lineStartPosition = new PIXI.Point(this.width, this.height/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2);
-    var childBlockPosition = new PIXI.Point(this.width + BLOCK_MARGIN.width, 0);
+    var lineStartPosition = new PIXI.Point(blockWidth, blockHeight/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2);
+    var childBlockPosition = new PIXI.Point(blockWidth + BLOCK_MARGIN.width, 0);
 
     //  for each parameter/branch, draw line and place block
     for (var i=0;i < this.parameterBlocks.length; i++) {
@@ -88,20 +95,20 @@ Block.prototype.render = function() {
         var curve = drawBezierCurve(lineStartPosition,lineEndPosition);
         this.addChild(curve);
 
-        //  parameter block: set position and add
+        //  parameter block: set position
         this.parameterBlocks[i].position = childBlockPosition;
-        this.addChild(this.parameterBlocks[i]);
+        var lastChildHeight = this.parameterBlocks[i].height;
 
-        //  child block: set position and add, make parameterBlock invisible
+        //  child block: set position, make corresponding parameterBlock invisible
         if (this.childBlocks[i] != null) {
             this.childBlocks[i].position = childBlockPosition;
-            this.addChild(this.childBlocks[i]);
+            lastChildHeight = this.childBlocks[i].height;
             this.parameterBlocks[i].visible = false;
         }
 
-        //  increment lineStartPositon and childBLockPosition
+        //  increment height of lineStartPositon and childBlockPosition
         lineStartPosition.y += LINE_STYLE.width + LINE_STYLE.spacing;
-        childBlockPosition.y += BLOCK_MARGIN.height + this.getChildAt(this.children.length-1).height;
+        childBlockPosition.y += BLOCK_MARGIN.height + lastChildHeight;
     }
 
     function drawBezierCurve(startPosition,endPosition) {
@@ -130,103 +137,187 @@ Block.prototype.render = function() {
     }
 }
 
-function setParentInteractivity(block, bool) {
-    var parent = block.parent;
-    while (parent !== null) {
-        parent.interactive = bool;
+//  replace parameterBlock location with block(this)
+Block.prototype.attachTo = function(parameterBlock) {
+    //console.log("DEBUG::: Attached to {" + parameterBlock.blockInfo.name + "}");
+    parameterBlock.visible = false;
+    parameterBlock.parent.addChild(this);
+    var index = parameterBlock.parent.parameterBlocks.indexOf(parameterBlock);
+    parameterBlock.parent.childBlocks[index] = this;
+    this.position = parameterBlock.position;
+}
+
+//  detach block(this) from parent block and restore parameter block
+Block.prototype.detachFromParentBlock = function() {
+    var index = this.parent.childBlocks.indexOf(this);
+    this.parent.parameterBlocks[index].visible = true;
+    this.parent.childBlocks[index] = null;
+}
+
+//  get position of block(this) relative to stage
+Block.prototype._getAbsolutePosition = function() {
+    var position = new PIXI.Point(this.position.x,this.position.y);
+    var parent = this.parent;
+    while (parent.hasOwnProperty('blockInfo')) {
+        position.x += parent.position.x;
+        position.y += parent.position.y;
         parent = parent.parent;
     }
+    return position;
 }
 
-Block.prototype.enableDragAndDrop = function() {
-    console.log("DragAndDrop: ")
-    this.hitArea = new PIXI.Rectangle(0,0,this.getChildAt(0).width,this.getChildAt(0).height);
+//  get stage(first non-block parent)
+Block.prototype._getStage = function() {
+    var parent = this.parent;
+    while (parent.hasOwnProperty('blockInfo')) {
+        parent = parent.parent;
+    }
+    return parent;
+}
+
+//  set interactivity for blocks
+Block.prototype.setInteractivity = function() {
     this.interactive = true;
-    this.buttonMode = true;
-    this
-        .on('mousedown', onDragStart)
-        .on('touchstart', onDragStart)
-        .on('mouseup', onDragEnd)
-        .on('mouseupoutside', onDragEnd)
-        .on('touchend', onDragEnd)
-        .on('touchendoutside', onDragEnd)
-        .on('mousemove', onDragMove)
-        .on('touchmove', onDragMove);
+    this.hitArea = this.getChildAt(0).getBounds();
 
-    function onDragStart(event)
-    {
-        //  turn off drag call to parent containers
-        setParentInteractivity(this,false);
-
-        //  turn on visibility for placeholderBlock
-        if (this.parent.parent != null) {
-            var idx = this.parent.getChildIndex(this);
-            this.placeholder = this.parent.getChildAt(idx-1);
-            this.placeholder.visible = true;
-            console.log("placeholder position: ");
-            console.log(this.placeholder.position);
-        } else {
-            this.placeholder = null;
-        }
-
-        this.data = event.data;
-        let mouseStartPosition = event.data.getLocalPosition(this.parent);
-        this.diff = new PIXI.Point(mouseStartPosition.x - this.position.x, mouseStartPosition.y - this.position.y);
-        this.originalPosition = new PIXI.Point(this.position.x,this.position.y);
-        console.log("original position: ");
-        console.log(this.originalPosition);
-
-        //this.alpha = 0.5;
-        this.dragging = true;
+    //  enable drag and drop for non-parameter blocks, enable mouse over check for parameter blocks
+    if (this.blockInfo.type != blockType.parameter) {
+        this
+            .on('mousedown', onDragStart)
+            .on('touchstart', onDragStart)
+            .on('mouseup', onDragEnd)
+            .on('mouseupoutside', onDragEnd)
+            .on('touchend', onDragEnd)
+            .on('touchendoutside', onDragEnd)
+            .on('mousemove', onDragMove)
+            .on('touchmove', onDragMove);
+    } else {
+        this
+            .on('mousemove', onParameterMove)
+            .on('touchmove', onParameterMove);
     }
 
-    function onDragEnd()
-    {
-        //  check if block in its original place
-        if (this.placeholder !== null) {
-            //  check if newPosition is out of bounds of rectangle
-            var finalPosition = this.data.getLocalPosition(this.parent);
-            var localRect = this.placeholder.getBounds();
-            localRect.x = this.placeholder.position.x;
-            localRect.y = this.placeholder.position.y;
+    function onDragStart(event) {
+        var relativeMousePosition = event.data.getLocalPosition(this);
+        if (this.hitArea.contains(relativeMousePosition.x, relativeMousePosition.y)) {
+            //console.log("DEBUG::: drag started by \"" + this.blockInfo.name + "\"");
 
-            //if (this.placeholder.getBounds().contains(finalPosition.x,finalPosition.y)) {
-            if (localRect.contains(finalPosition.x,finalPosition.y)) {
-                this.placeholder.visible = false;
-                this.position = this.originalPosition;
-            } else {
-                console.log("TODO: child.removeFromParent");
+            //  set toggle that becomes true the moment when drag starts
+            this.startedDragging = false;
+
+            //  save original position and distance from original to mouse position
+            let mouseStartPosition = event.data.getLocalPosition(this.parent);
+            this.diff = new PIXI.Point(mouseStartPosition.x - this.position.x, mouseStartPosition.y - this.position.y);
+            this.originalPosition = new PIXI.Point(this.position.x,this.position.y);
+
+            this.alpha = 0.6;
+            this.dragging = true;
+        }
+    }
+
+    function onDragEnd(event) {
+        //  if block had been clicked, check drag or click, and execute by case
+        if (this.dragging) {
+            // case: dragged
+            if (this.startedDragging) {
+                //console.log("DEBUG::: drag ended by \"" + this.blockInfo.name + "\"");
+
+                //  if there is parameter block below, attach
+                var targetBlock = this._getStage().target;
+                if (targetBlock) {
+                    this.attachTo(targetBlock);
+                    this._getStage().target = null;
+                }
             }
-        }
+            // case: clicked
+            else {
+                //  export block
+                console.log(this.export());
+            }
 
-        this.alpha = 1;
-        this.dragging = false;
-        this.data = null;
-        this.placeholderBlock = null;
-        setParentInteractivity(this,true);
+            this.alpha = 1;
+            this.dragging = false;
+        //}
+        }
     }
 
+    function onDragMove(event) {
+        //console.log("DEBUG::: drag moving by \"" + this.blockInfo.name + "\"");
 
-    function onDragMove(e)
-    {
-        setParentInteractivity(this,false);
-        var newPosition = e.data.getLocalPosition(this.parent);
         if (this.dragging)
         {
-            var newPosition = this.data.getLocalPosition(this.parent);
+            //  re-position block to relative mouse position
+            var newPosition = event.data.getLocalPosition(this.parent);
             this.position.x = newPosition.x - this.diff.x;
             this.position.y = newPosition.y - this.diff.y;
+
+            //  trigger when first drag after select
+            if (!this.startedDragging) {
+                this.startedDragging = true;
+
+                //  if block has parent block, detach from parent block
+                if (this.parent.hasOwnProperty('blockInfo')) {
+                    this.detachFromParentBlock();
+                }
+
+                //  take out selected block to front (last child of stage)
+                //  shift postion to absolute position (in relation to stage)
+                var absolutePosition = this._getAbsolutePosition();
+                this._getStage().addChild(this);
+                this.position = absolutePosition;
+            }
         }
-        if (this.getBounds().contains(newPosition.x,newPosition.y)) {
-            console.log("mouse moved with " + this.width);
+    }
+
+    // "mousemove" event handler for parameter blocks
+    function onParameterMove(event) { 
+        //console.log("DEBUG::: parameter moving by \"" + this.blockInfo.name + "\"");
+
+        //  if mouse position is inside hit area, then set stage.target to this
+        var relativeMousePosition = event.data.getLocalPosition(this);
+        if (this.hitArea.contains(relativeMousePosition.x, relativeMousePosition.y)) {
+            this._getStage().target = this;
+        } else {
+            if (this == this._getStage().target) {
+                this._getStage().target = null;
+            }
         }
-        setParentInteractivity(this,true);
     }
 }
 
-function isIntersecting(r1, r2) {
-    return !(r2.x > (r1.x + r1.width) || 
-           (r2.x + r2.width) < r1.x || 
-           r2.y > (r1.y + r1.height) ||
-           (r2.y + r2.height) < r1.y);
+//  returns a string version of the selected block
+Block.prototype.export = function() {
+    //  quick return space + variable name or space + {parameter name}
+    if (this.blockInfo.type == blockType.constant) {
+        return " " + this.blockInfo.name;
+    } else if (this.blockInfo.type == blockType.parameter) {
+        return " {" + this.blockInfo.name + "}";
+    }
+
+    var word = "";
+
+    //  add starting parenthesis if the block is a function or in stage
+    if (this._getStage() == this.parent) {
+        word += "(";
+    } else if (this.blockInfo.type == blockType.function) {
+        word += " (";
+    }
+
+    //  add block name
+    word += this.blockInfo.name;
+
+    //  add child blocks
+    for (let i=0;i<this.blockInfo.parameters.length;i++) {
+        if (this.childBlocks[i]) {
+            word += this.childBlocks[i].export();
+        } else {
+            word += this.parameterBlocks[i].export();
+        }
+    }
+
+    //  add closing parenthesis
+    word += ")";
+
+    return word;
 }
+
