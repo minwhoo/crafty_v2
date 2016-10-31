@@ -1,3 +1,5 @@
+# Crafty Design Specs
+
 **blockInfo**
 properties
  - name
