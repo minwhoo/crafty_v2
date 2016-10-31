@@ -15,7 +15,9 @@ renderer.resize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.view);
 
 var stage = new PIXI.Container();
+stage.id = "stage";
 var sidebar = new PIXI.Container();
+sidebar.id = "sidebar";
 renderer.render(stage); // remove black flash
 stage.interactive = false;
 
@@ -44,7 +46,6 @@ function setup() {
     sidebar.endFill();
     stage.addChild(sidebar);
 
-    /*
     var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
         var addBlockInfo = new BlockInfo("+", blockType.function, parameters = ["a", "b"], library = "math")
         var equalsBlockInfo = new BlockInfo("=", blockType.function, parameters = ["a", "b"], library = "math")
@@ -53,10 +54,10 @@ function setup() {
     var equalsBlock = new Block(equalsBlockInfo);
     var ifBlock = new Block(ifBlockInfo, [null, addBlock, null]);
 
-    ifBlock.position.set(10,10);
+    ifBlock.position.set(SIDEBAR_STYLE.width + 10,10);
     stage.addChild(ifBlock);
+    equalsBlock.position.set(SIDEBAR_STYLE.width + 10,10);
     stage.addChild(equalsBlock);
-    */
 
 
     //  resize renderer, sidebar, backgroundTile when window is resized

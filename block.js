@@ -19,6 +19,7 @@ function BlockInfo(name, type, parameters = [], library = "", docstring = "") {
 var blockType = {function: 0, constant: 1, parameter: 2};
 
 function Block(blockInfo, childBlocks,parentBlock=null) {
+    this.id = "block"
     PIXI.Container.call(this);
     this.blockInfo = blockInfo;
     this.childBlocks = childBlocks || [];
@@ -155,6 +156,12 @@ Block.prototype.detachFromParentBlock = function() {
     var index = this.parent.childBlocks.indexOf(this);
     this.parent.parameterBlocks[index].visible = true;
     this.parent.childBlocks[index] = null;
+
+    //  take out selected block to front (last child of stage)
+    //  shift postion to absolute position (in relation to stage)
+    var absolutePosition = this._getAbsolutePosition();
+    this._getStage().addChild(this);
+    this.position = absolutePosition;
 }
 
 //  get position of block(this) relative to stage
@@ -172,7 +179,7 @@ Block.prototype._getAbsolutePosition = function() {
 //  get stage(first non-block parent)
 Block.prototype._getStage = function() {
     var parent = this.parent;
-    while (parent.hasOwnProperty('blockInfo')) {
+    while (parent.id != "stage") {
         parent = parent.parent;
     }
     return parent;
@@ -263,11 +270,6 @@ Block.prototype.setInteractivity = function() {
                     this.detachFromParentBlock();
                 }
 
-                //  take out selected block to front (last child of stage)
-                //  shift postion to absolute position (in relation to stage)
-                var absolutePosition = this._getAbsolutePosition();
-                this._getStage().addChild(this);
-                this.position = absolutePosition;
             }
         }
     }
