@@ -3,7 +3,7 @@ const BLOCK_TEXT_MARGIN = {top: 10, left: 10, right: 10, bottom: 10};
 const BLOCK_STYLE = {color: 0x2763c4, opacity: 1, cornerRadius: 10};
 const PARAMETER_BLOCK_STYLE = {color: 0x6691d6, opacity: 1, cornerRadius: 10};
 const LINE_STYLE = {color: 0xFFFFFF, width: 3, spacing: 2, bezierHScale: 0.1, bezierVScale: 0.5};
-const BLOCK_MARGIN = {v: 10, h: 100};
+const BLOCK_MARGIN = {height: 10, width: 100};
 
 function BlockInfo(name, type, parameters = [], library = "", docstring = "") {
     this.name = name;
@@ -15,18 +15,19 @@ function BlockInfo(name, type, parameters = [], library = "", docstring = "") {
 
 var blockType = {function: 0, constant: 1, parameter: 2};
 
-function Block(blockInfo, children=[],parent=null) {
+function Block(blockInfo, childBlocks,parentBlock=null) {
+    PIXI.Container.call(this);
     this.blockInfo = blockInfo;
-    this.children = children;
-    this.parent = parent;
+    this.childBlocks = childBlocks || [];
+    this.parentBlock = parentBlock; // maybe not needed
     this.parameterBlocks = [];
-    this.container = new PIXI.Container();
     this.lines = [];
 
     this.initialize();
 
     console.log(this.blockInfo.name + " created!");
 }
+Block.prototype = Object.create(PIXI.Container.prototype);
 
 Block.prototype.initialize = function() {
     //  Crate text and set style
@@ -36,23 +37,21 @@ Block.prototype.initialize = function() {
     );
     text.position.set(BLOCK_TEXT_MARGIN.top,BLOCK_TEXT_MARGIN.left);
 
-    //  Set block Graphics style
+    //  Create block graphics and set style
     var blockGraphics = new PIXI.Graphics();
-    //  this.blockGraphics.lineStyle(0);
-    if (this.blockInfo.type == blockType.parameter) {
+    if (this.blockInfo.type == blockType.parameter) { // if block is parameter, apply different style
         blockGraphics.beginFill(PARAMETER_BLOCK_STYLE.color, PARAMETER_BLOCK_STYLE.opacity);
     } else {
         blockGraphics.beginFill(BLOCK_STYLE.color, BLOCK_STYLE.opacity);
     }
-    
     blockGraphics.drawRoundedRect(0,0,text.width + BLOCK_TEXT_MARGIN.left + BLOCK_TEXT_MARGIN.right, text.height + BLOCK_TEXT_MARGIN.top + BLOCK_TEXT_MARGIN.bottom, BLOCK_STYLE.cornerRadius);
     blockGraphics.endFill();
 
     //  Add PIXI Objects to parent container
-    this.container.addChild(blockGraphics);
-    this.container.addChild(text);
+    this.addChild(blockGraphics);
+    this.addChild(text);
 
-    //  Create and store parameter blocks
+    //  Create and store parameter blocks with parameterName
     for (var i=0;i<this.blockInfo.parameters.length;i++) {
         var parameterBlockInfo = new BlockInfo(this.blockInfo.parameters[i],blockType.parameter);
         var newBlock = new Block(parameterBlockInfo);
@@ -60,8 +59,8 @@ Block.prototype.initialize = function() {
     }
 
     //  Make children list of null blocks
-    if (this.children.length == 0) {
-        this.children = new Array(this.parameterBlocks.length);
+    if (this.childBlocks.length == 0) {
+        this.childBlocks = new Array(this.parameterBlocks.length);
     }
 
     //  render self
@@ -73,39 +72,36 @@ Block.prototype.initialize = function() {
     }
 }
 
+//** render: adds child blocks and draws lines
 Block.prototype.render = function() {
-    var startX = this.container.width;
-    var startY = this.container.height/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.children.length/2;
-    var accumulatedHeight = 0;
+    var blockHeight = this.getChildAt(0).height;
+    var lineStartPosition = new PIXI.Point(this.width, this.height/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2);
+    var childBlockPosition = new PIXI.Point(this.width + BLOCK_MARGIN.width, 0);
 
-    //  for each parameter/branch, place block and draw line
+    //  for each parameter/branch, draw line and place block
     for (var i=0;i < this.parameterBlocks.length; i++) {
-        if (this.children[i] == null) {
-            var childBlock = this.parameterBlocks[i];
-        } else {
-            var parameterBlock = this.parameterBlocks[i];
-            var childBlock = this.children[i];
+        //  set line end position and draw line
+        var lineEndPosition = new PIXI.Point(childBlockPosition.x, childBlockPosition.y + blockHeight/2);
+        if (i==0) { // for case 0, make line straight
+            lineEndPosition.y = lineStartPosition.y;
+        }
+        var curve = drawBezierCurve(lineStartPosition,lineEndPosition);
+        this.addChild(curve);
+
+        //  parameter block: set position and add
+        this.parameterBlocks[i].position = childBlockPosition;
+        this.addChild(this.parameterBlocks[i]);
+
+        //  child block: set position and add, make parameterBlock invisible
+        if (this.childBlocks[i] != null) {
+            this.childBlocks[i].position = childBlockPosition;
+            this.addChild(this.childBlocks[i]);
+            this.parameterBlocks[i].visible = false;
         }
 
-        var sP = new PIXI.Point(startX,startY+i*(LINE_STYLE.width + LINE_STYLE.spacing));
-        var eP = new PIXI.Point(startX + BLOCK_MARGIN.h, accumulatedHeight+this.container.getChildAt(0).height/2);
-        // for middle point
-        // var eP = new PIXI.Point(startX + BLOCK_MARGIN.h, accumulatedHeight+childBlock.container.height/2);
-        //  to make first curve a straight line
-        if (i==0) {
-            eP.y = sP.y;
-        }
-        var curve = drawBezierCurve(sP,eP);
-        this.container.addChild(curve);
-
-        childBlock.container.position.set(startX + BLOCK_MARGIN.h,accumulatedHeight);
-        if (this.children[i] != null) {
-            parameterBlock.container.position.set(startX + BLOCK_MARGIN.h,accumulatedHeight);
-            this.container.addChild(parameterBlock.container);
-            parameterBlock.container.visible = false;
-        }
-        accumulatedHeight += childBlock.container.height + BLOCK_MARGIN.v;
-        this.container.addChild(childBlock.container);
+        //  increment lineStartPositon and childBLockPosition
+        lineStartPosition.y += LINE_STYLE.width + LINE_STYLE.spacing;
+        childBlockPosition.y += BLOCK_MARGIN.height + this.getChildAt(this.children.length-1).height;
     }
 
     function drawBezierCurve(startPosition,endPosition) {
@@ -134,8 +130,8 @@ Block.prototype.render = function() {
     }
 }
 
-function setParentInteractivity(container, bool) {
-    var parent = container.parent;
+function setParentInteractivity(block, bool) {
+    var parent = block.parent;
     while (parent !== null) {
         parent.interactive = bool;
         parent = parent.parent;
@@ -144,10 +140,10 @@ function setParentInteractivity(container, bool) {
 
 Block.prototype.enableDragAndDrop = function() {
     console.log("DragAndDrop: ")
-    this.container.hitArea = new PIXI.Rectangle(0,0,this.container.getChildAt(0).width,this.container.getChildAt(0).height);
-    this.container.interactive = true;
-    this.container.buttonMode = true;
-    this.container 
+    this.hitArea = new PIXI.Rectangle(0,0,this.getChildAt(0).width,this.getChildAt(0).height);
+    this.interactive = true;
+    this.buttonMode = true;
+    this
         .on('mousedown', onDragStart)
         .on('touchstart', onDragStart)
         .on('mouseup', onDragEnd)

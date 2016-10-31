@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Hello World</title>
+<title>Crafty - Visual Programming Environment</title>
 <style>* {padding: 0; margin: 0;}
 </style>
 <body>
@@ -28,8 +28,8 @@ function setup() {
     17,
     17
   );
-  sprite.width = 1000;
-  sprite.height = 1000;
+  sprite.width = window.innerWidth;
+  sprite.height = window.innerHeight;
   stage.addChild(sprite);
 
   var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
@@ -39,9 +39,13 @@ function setup() {
   var addBlock = new Block(addBlockInfo);
   var equalsBlock = new Block(equalsBlockInfo);
   var ifBlock = new Block(ifBlockInfo, [null, addBlock, null]);
-  ifBlock.container.position.set(10,10);
-  stage.addChild(ifBlock.container);
-  stage.addChild(equalsBlock.container);
+  //ifBlock.container.position.set(10,10);
+  //stage.addChild(ifBlock.container);
+  //stage.addChild(equalsBlock.container);
+
+  ifBlock.position.set(10,10);
+  stage.addChild(ifBlock);
+  stage.addChild(equalsBlock);
 
   animate();
 
