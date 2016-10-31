@@ -17,8 +17,6 @@ document.body.appendChild(renderer.view);
 
 var stage = new PIXI.Container();
 stage.id = "stage";
-var sidebar = new PIXI.Container();
-sidebar.id = "sidebar";
 renderer.render(stage); // remove black flash
 stage.interactive = false;
 
@@ -42,6 +40,7 @@ function setup() {
 
     //  create and add sidebar
     var sidebar = new PIXI.Graphics();
+    sidebar.id = "sidebar";
     sidebar.beginFill(SIDEBAR_STYLE.backgroundColor,1);
     sidebar.drawRect(0,0,SIDEBAR_STYLE.width, window.innerHeight);
     sidebar.endFill();

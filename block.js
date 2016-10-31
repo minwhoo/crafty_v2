@@ -159,6 +159,10 @@ Block.prototype.detachFromParentBlock = function() {
     this.parent.parameterBlocks[index].visible = true;
     this.parent.childBlocks[index] = null;
 
+    this.addToStage();
+}
+
+Block.prototype.addToStage = function() {
     //  take out selected block to front (last child of stage)
     //  shift postion to absolute position (in relation to stage)
     var absolutePosition = this._getAbsolutePosition();
@@ -217,6 +221,15 @@ Block.prototype.setInteractivity = function() {
             //  set toggle that becomes true the moment when drag starts
             this.startedDragging = false;
 
+            //  if parent is sidebar, create copy
+            if (this.parent.id == "sidebar") {
+                let blockCopy = new Block(this.blockInfo);
+                this.sidebarRect = this.parent.getBounds();
+                blockCopy.position = this.position;
+                this.parent.addChildAt(blockCopy,0);
+                this.render();
+            }
+
             //  save original position and distance from original to mouse position
             let mouseStartPosition = event.data.getLocalPosition(this.parent);
             this.diff = new PIXI.Point(mouseStartPosition.x - this.position.x, mouseStartPosition.y - this.position.y);
@@ -234,6 +247,16 @@ Block.prototype.setInteractivity = function() {
             // case: dragged
             if (this.startedDragging) {
                 //console.log("DEBUG::: drag ended by \"" + this.blockInfo.name + "\"");
+
+                //  if parent is sidebar, either add new Block to stage or remove depending on mouse location
+                if (this.parent.id == "sidebar") {
+                    var relativeMousePosition = event.data.getLocalPosition(this.parent);
+                    if (this.sidebarRect.contains(relativeMousePosition.x, relativeMousePosition.y)) {
+                        this.parent.removeChild(this);
+                    } else {
+                        this.addToStage();
+                    }
+                }
 
                 //  if there is parameter block below, attach
                 if (MOUSEOVER_BLOCK) {
@@ -271,7 +294,6 @@ Block.prototype.setInteractivity = function() {
                 if (this.parent.hasOwnProperty('blockInfo')) {
                     this.detachFromParentBlock();
                 }
-
             }
         }
     }

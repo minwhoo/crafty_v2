@@ -6,9 +6,10 @@ let EQUALS_BLOCKINFO = new BlockInfo("=", blockType.function, parameters = ["a",
 //  block libraries
 let BLOCK_LIB_STANDARD = [IF_BLOCKINFO, ADD_BLOCKINFO, EQUALS_BLOCKINFO];
 
-BLOCK_LIBRARY_MARGIN = {left: 10, top: 10, height: 10};
+BLOCK_LIBRARY_MARGIN = {left: 30, top: 20, height: 10};
 
 function initializeBlockLibrary(container) {
+    console.log("DEBUG::: loading library...");
     var height = BLOCK_LIBRARY_MARGIN.top;
     for (let blockInfo of BLOCK_LIB_STANDARD) {
         let block = new Block(blockInfo);
@@ -16,4 +17,5 @@ function initializeBlockLibrary(container) {
         container.addChild(block);
         height += block.height + BLOCK_LIBRARY_MARGIN.height;
     }
+    console.log("DEBUG::: library loaded!!");
 }
