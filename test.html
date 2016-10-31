@@ -6,6 +6,7 @@
 <body>
 <script src="pixi.min.js"></script>
 <script src="block.js"></script>
+<script src="blocklibrary.js"></script>
 <script>
 var renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0xCCCCCC, antialias: true });
 renderer.view.style.position = "absolute";
@@ -46,6 +47,7 @@ function setup() {
     sidebar.endFill();
     stage.addChild(sidebar);
 
+    /*
     var ifBlockInfo = new BlockInfo("if", blockType.function, parameters = ["condition", "true-body", "false-body"], library = "standard")
         var addBlockInfo = new BlockInfo("+", blockType.function, parameters = ["a", "b"], library = "math")
         var equalsBlockInfo = new BlockInfo("=", blockType.function, parameters = ["a", "b"], library = "math")
@@ -58,7 +60,8 @@ function setup() {
     stage.addChild(ifBlock);
     equalsBlock.position.set(SIDEBAR_STYLE.width + 10,10);
     stage.addChild(equalsBlock);
-
+    */
+    initializeBlockLibrary(sidebar);
 
     //  resize renderer, sidebar, backgroundTile when window is resized
     window.addEventListener('resize', function(event){

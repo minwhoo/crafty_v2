@@ -66,17 +66,17 @@ Block.prototype.initialize = function() {
         var newBlock = new Block(parameterBlockInfo);
         this.parameterBlocks.push(newBlock);
 
-        //  Add parameter block to this(block)
-        this.addChild(this.parameterBlocks[i]);
+        //  Add parameter block to this(block) and make it invisible
+        this.addChild(this.parameterBlocks[i]).visible = false;
 
-        //  Add child block to this(block) if it isn't null
+        //  Add child block to this(block) if it isn't null and make it invisible
         if (this.childBlocks[i] != null) {
-            this.addChild(this.childBlocks[i]);
+            this.addChild(this.childBlocks[i]).visible = false;
         }
     }
 
     //  render self
-    this.render();
+    //  this.render();
 
     //  set interactivity of blocks
     this.setInteractivity();
@@ -100,11 +100,13 @@ Block.prototype.render = function() {
         this.addChild(curve);
 
         //  parameter block: set position
+        this.parameterBlocks[i].visible = true;
         this.parameterBlocks[i].position = childBlockPosition;
         var lastChildHeight = this.parameterBlocks[i].height;
 
         //  child block: set position, make corresponding parameterBlock invisible
         if (this.childBlocks[i] != null) {
+            this.childBlocks[i].visible = true;
             this.childBlocks[i].position = childBlockPosition;
             lastChildHeight = this.childBlocks[i].height;
             this.parameterBlocks[i].visible = false;
@@ -168,7 +170,7 @@ Block.prototype.detachFromParentBlock = function() {
 Block.prototype._getAbsolutePosition = function() {
     var position = new PIXI.Point(this.position.x,this.position.y);
     var parent = this.parent;
-    while (parent.hasOwnProperty('blockInfo')) {
+    while (parent.id != "stage") {
         position.x += parent.position.x;
         position.y += parent.position.y;
         parent = parent.parent;
