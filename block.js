@@ -75,22 +75,32 @@ Block.prototype.initialize = function() {
         }
     }
 
-    //  render self
-    //  this.render();
-
     //  set interactivity of blocks
     this.setInteractivity();
 }
 
 //** render: positions child/parameter blocks and draws lines
-Block.prototype.render = function() {
+Block.prototype.renderFrom = function(childIndex) {
+    console.log("DEBUG::: Render {" + this.blockInfo.name + "} from index " + childIndex);
+
     var blockWidth = this.getChildAt(0).width;
     var blockHeight = this.getChildAt(0).height;
     var lineStartPosition = new PIXI.Point(blockWidth, blockHeight/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2);
     var childBlockPosition = new PIXI.Point(blockWidth + BLOCK_MARGIN.width, 0);
 
+    if (childIndex != 0) {
+        let previousHeight = this.childBlocks[childIndex-1].y + this.childBlocks[childIndex-1].height + BLOCK_MARGIN.height;
+        childBlockPosition.y = previousHeight;
+    }
+
+    if (childIndex < this.lines.length) {
+        for (let i=childIndex;i<this.lines.length;i++) {
+            this.removeChild(this.lines[i]);
+        }
+    }
+
     //  for each parameter/branch, draw line and place block
-    for (var i=0;i < this.parameterBlocks.length; i++) {
+    for (var i=childIndex;i < this.parameterBlocks.length; i++) {
         //  set line end position and draw line
         var lineEndPosition = new PIXI.Point(childBlockPosition.x, childBlockPosition.y + blockHeight/2);
         if (i==0) { // for case 0, make line straight
@@ -98,6 +108,7 @@ Block.prototype.render = function() {
         }
         var curve = drawBezierCurve(lineStartPosition,lineEndPosition);
         this.addChild(curve);
+        this.lines[i] = curve;
 
         //  parameter block: set position
         this.parameterBlocks[i].visible = true;
@@ -145,16 +156,29 @@ Block.prototype.render = function() {
 
 //  replace parameterBlock location with block(this)
 Block.prototype.attachTo = function(parameterBlock) {
-    //console.log("DEBUG::: Attached to {" + parameterBlock.blockInfo.name + "}");
+    console.log("DEBUG::: Attached to {" + parameterBlock.blockInfo.name + "}");
     parameterBlock.visible = false;
     parameterBlock.parent.addChild(this);
     var index = parameterBlock.parent.parameterBlocks.indexOf(parameterBlock);
     parameterBlock.parent.childBlocks[index] = this;
     this.position = parameterBlock.position;
+
+    this.update();
+}
+
+Block.prototype.update = function() {
+    console.log("DEBUG::: Update called by {" + this.blockInfo.name + "}");
+
+    if (this.parent.id != "stage") {
+        this.parent.renderFrom(this.parent.childBlocks.indexOf(this)+1);
+        this.parent.update();
+    }
 }
 
 //  detach block(this) from parent block and restore parameter block
 Block.prototype.detachFromParentBlock = function() {
+    console.log("DEBUG::: Detached from {" + this.parent.blockInfo.name + "}");
+
     var index = this.parent.childBlocks.indexOf(this);
     this.parent.parameterBlocks[index].visible = true;
     this.parent.childBlocks[index] = null;
@@ -227,7 +251,7 @@ Block.prototype.setInteractivity = function() {
                 this.sidebarRect = this.parent.getBounds();
                 blockCopy.position = this.position;
                 this.parent.addChildAt(blockCopy,0);
-                this.render();
+                this.renderFrom(0);
             }
 
             //  save original position and distance from original to mouse position
