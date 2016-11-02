@@ -180,10 +180,12 @@ Block.prototype.detachFromParentBlock = function() {
     console.log("DEBUG::: Detached from {" + this.parent.blockInfo.name + "}");
 
     var index = this.parent.childBlocks.indexOf(this);
-    this.parent.parameterBlocks[index].visible = true;
+    let parameterBlock = this.parent.parameterBlocks[index];
+    parameterBlock.visible = true;
     this.parent.childBlocks[index] = null;
-
+    
     this.addToStage();
+    return parameterBlock;
 }
 
 Block.prototype.addToStage = function() {
@@ -287,6 +289,11 @@ Block.prototype.setInteractivity = function() {
                     this.attachTo(MOUSEOVER_BLOCK);
                     MOUSEOVER_BLOCK = null;
                 }
+
+                //  render update the taken out block
+                if (this.originalBlock) {
+                    this.originalBlock.update();
+                }
             }
             // case: clicked
             else {
@@ -314,9 +321,11 @@ Block.prototype.setInteractivity = function() {
             if (!this.startedDragging) {
                 this.startedDragging = true;
 
-                //  if block has parent block, detach from parent block
+                //  if block has parent block, detach from parent block and set originalBlock for later update()
                 if (this.parent.hasOwnProperty('blockInfo')) {
-                    this.detachFromParentBlock();
+                    this.originalBlock = this.detachFromParentBlock();
+                } else {
+                    this.originalBlock = null;
                 }
             }
         }
