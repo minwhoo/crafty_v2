@@ -85,7 +85,7 @@ Block.prototype.renderFrom = function(childIndex) {
 
     var blockWidth = this.getChildAt(0).width;
     var blockHeight = this.getChildAt(0).height;
-    var lineStartPosition = new PIXI.Point(blockWidth, blockHeight/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2);
+    var lineStartPosition = new PIXI.Point(blockWidth, blockHeight/2 - (LINE_STYLE.width + LINE_STYLE.spacing)*this.childBlocks.length/2 + childIndex*(LINE_STYLE.width + LINE_STYLE.spacing));
     var childBlockPosition = new PIXI.Point(blockWidth + BLOCK_MARGIN.width, 0);
 
     if (childIndex != 0) {
