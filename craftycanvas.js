@@ -27,13 +27,14 @@ function CraftyCanvas(window) {
         backgroundTile.height = window.innerHeight;
         stage.addChild(backgroundTile);
 
-
         //  create and add sidebar
-        var sidebar = new PIXI.Graphics();
+        var sidebar = new PIXI.Container();
         sidebar.id = "sidebar";
-        sidebar.beginFill(SIDEBAR_STYLE.backgroundColor,1);
-        sidebar.drawRect(0,0,SIDEBAR_STYLE.width, window.innerHeight);
-        sidebar.endFill();
+        var sidebarBackground = new PIXI.Graphics();
+        sidebarBackground.beginFill(SIDEBAR_STYLE.backgroundColor,1);
+        sidebarBackground.drawRect(0,0,SIDEBAR_STYLE.width, renderer.height);
+        sidebarBackground.endFill();
+        sidebar.addChild(sidebarBackground);
         stage.addChild(sidebar);
 
         initializeBlockLibrary(sidebar);

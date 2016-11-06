@@ -250,9 +250,9 @@ Block.prototype.setInteractivity = function() {
             //  if parent is sidebar, create copy
             if (this.parent.id == "sidebar") {
                 let blockCopy = new Block(this.blockInfo);
-                this.sidebarRect = this.parent.getBounds();
+                this.sidebarRect = this.parent.getChildAt(0).getBounds();
                 blockCopy.position = this.position;
-                this.parent.addChildAt(blockCopy,0);
+                this.parent.addChildAt(blockCopy,1);
                 this.renderFrom(0);
             }
 
