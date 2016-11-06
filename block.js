@@ -277,18 +277,19 @@ Block.prototype.setInteractivity = function() {
         //  if block had been clicked, check drag or click, and execute by case
         if (this.dragging) {
             // case: dragged
+
+            //  if parent is sidebar, either add new Block to stage or remove depending on mouse location
+            if (this.parent.id == "sidebar") {
+                var relativeMousePosition = event.data.getLocalPosition(this.parent);
+                if (this.sidebarRect.contains(relativeMousePosition.x, relativeMousePosition.y)) {
+                    this.parent.removeChild(this);
+                } else {
+                    this.addToStage();
+                }
+            }
+
             if (this.startedDragging) {
                 //console.log("DEBUG::: drag ended by \"" + this.blockInfo.name + "\"");
-
-                //  if parent is sidebar, either add new Block to stage or remove depending on mouse location
-                if (this.parent.id == "sidebar") {
-                    var relativeMousePosition = event.data.getLocalPosition(this.parent);
-                    if (this.sidebarRect.contains(relativeMousePosition.x, relativeMousePosition.y)) {
-                        this.parent.removeChild(this);
-                    } else {
-                        this.addToStage();
-                    }
-                }
 
                 //  if there is parameter block below, attach
                 if (MOUSEOVER_BLOCK) {
