@@ -235,6 +235,12 @@ Block.prototype.setInteractivity = function() {
             .on('touchmove', onDragMove);
     } else {
         this
+            .on('mousedown', onParameterStart)
+            .on('touchstart', onParameterStart)
+            .on('mouseup', onParameterEnd)
+            .on('mouseupoutside', onParameterEnd)
+            .on('touchend', onParameterEnd)
+            .on('touchendoutside', onParameterEnd)
             .on('mousemove', onParameterMove)
             .on('touchmove', onParameterMove);
     }
@@ -347,6 +353,19 @@ Block.prototype.setInteractivity = function() {
                     this.getChildAt(0).tint = 0xFFFFFF;
                 }
             }
+        }
+    }
+
+    function onParameterStart(event) {
+        this.clicked = true;
+    }
+    function onParameterEnd(event) {
+        if (this.clicked) {
+            var variableName = prompt("Type in your constant!");
+            let constantBlockInfo = new BlockInfo(variableName, blockType.constant);
+            var constantBlock = new Block(constantBlockInfo);
+            constantBlock.attachTo(this);
+            this.clicked = false;
         }
     }
 }
