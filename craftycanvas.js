@@ -1,9 +1,10 @@
-function CraftyCanvas(window) {
-    var renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0xCCCCCC, antialias: true });
+function CraftyCanvas(xScale=1,xConstant=0,yScale=1,yConstant=0) {
+    renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0xCCCCCC, antialias: true });
     renderer.view.style.position = "absolute";
     renderer.view.style.display = "block";
+    renderer.view.id = "crafty-canvas";
     renderer.autoResize = true;
-    renderer.resize(window.innerWidth, window.innerHeight);
+    renderer.resize(xScale*window.innerWidth + xConstant,yScale*window.innerHeight + yConstant);
 
     var stage = new PIXI.Container();
     stage.id = "stage";
@@ -23,8 +24,8 @@ function CraftyCanvas(window) {
             17,
             17
         );
-        backgroundTile.width = window.innerWidth;
-        backgroundTile.height = window.innerHeight;
+        backgroundTile.width = renderer.width;
+        backgroundTile.height = renderer.height;
         stage.addChild(backgroundTile);
 
         //  create and add sidebar
@@ -41,10 +42,10 @@ function CraftyCanvas(window) {
 
         //  resize renderer, sidebar, backgroundTile when window is resized
         window.addEventListener('resize', function(event){
-            backgroundTile.width = window.innerWidth;
-            backgroundTile.height = window.innerHeight;
-            sidebar.height = window.innerHeight;
-            renderer.resize(window.innerWidth, window.innerHeight);
+            renderer.resize(xScale*window.innerWidth + xConstant,yScale*window.innerHeight + yConstant);
+            backgroundTile.width = renderer.width;
+            backgroundTile.height = renderer.height;
+            sidebarBackground.height = renderer.height;
         });
 
         //  render animation
@@ -55,5 +56,5 @@ function CraftyCanvas(window) {
             requestAnimationFrame( animate );
         }
     }
-    return renderer.view
+    return renderer.view;
 }

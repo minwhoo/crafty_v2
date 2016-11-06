@@ -2,16 +2,19 @@
 <meta charset="utf-8">
 <title>Crafty - Visual Programming Environment</title>
 <style>* {padding: 0; margin: 0;}
+#crafty-canvas {
+    top: 10px;
+    left: 10px;
+}
 </style>
 <body>
 <script src="pixi.min.js"></script>
+<script src="pixi.dom.js"></script>
 <script src="block.js"></script>
 <script src="blocklibrary.js"></script>
 <script src="craftycanvas.js"></script>
 <script>
-let canvas = CraftyCanvas(window);
+let canvas = CraftyCanvas(1,-20,1,-20);
 document.body.appendChild(canvas);
 </script>
-<p>
-</p>
 </body>
